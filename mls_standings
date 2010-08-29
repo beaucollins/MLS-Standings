@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+require 'open-uri'
+require 'rubygems'
+require 'hpricot'
+
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'lib'))
+
+require 'standings'
+require 'stats'
+
+
+doc = open('http://soccernet.espn.go.com/tables?league=usa.1&cc=5901') {|f| Hpricot(f)}
+
+standings = doc.search('.tablehead').inject(Standings.new) do |standings, html|
+  standings.conference(html.search("td[@colspan='24]").to_s[/(Eastern|Western) Conference/]) do
+    html.search('tbody tr').collect { |row| Stats.new(row) } 
+  end
+  standings
+end
+
+puts "*" * 70
+puts "SEEDED"
+puts "-" * 70
+puts standings.seeded
+
+puts "\n"
+puts "WILDCARDS"
+puts "-" * 70
+puts standings.wildcards
+puts "\n"
+puts "Remaining"
+puts "-" * 70
+puts standings.remaining
+puts "\n"
+puts "*" * 70
+
+puts "LEAGUE RANKINGS"
+puts "\n"
+
+puts standings.league
